@@ -8,16 +8,15 @@ export default defineConfig({
       ? '/fla-viewer-updver/'
       : '/',
   plugins: [{
-    name: 'mobile-and-library-tools',
+    name: 'fla-viewer-feature-entrypoints',
     transformIndexHtml(html) {
+      // Run the bootstrap before main.ts; it patches the parser prototype and
+      // registers the library listener before the viewer begins loading files.
       const withBootstrap = html.replace(
         '<script type="module" src="/src/main.ts"></script>',
-        '<script type="module" src="/src/asset-browser-bootstrap.ts"></script>\n  <script type="module" src="/src/main.ts"></script>'
+        '<script type="module" src="/src/asset-browser-bootstrap.ts"></script>\n  <script type="module" src="/src/mobile-transport.ts"></script>\n  <script type="module" src="/src/main.ts"></script>'
       );
-      return withBootstrap.replace(
-        '</body>',
-        '  <script type="module" src="/src/mobile-transport.ts"></script>\n</body>'
-      );
+      return withBootstrap;
     },
   }],
   server: { port: 3000 },

@@ -1,11 +1,6 @@
-import { FLAParser } from './fla-parser';
 import type { FLADocument, Symbol as FLASymbol } from './types';
-import {
-  downloadBlob,
-  exportSingleFrame,
-  exportVideo,
-  exportWebM,
-} from './video-exporter';
+import { FLARenderer } from './renderer';
+import { downloadBlob, exportSingleFrame, exportVideo, exportWebM } from './video-exporter';
 
 type LibraryItem =
   | { kind: 'symbol'; name: string; detail: string; symbol: FLASymbol }
@@ -13,7 +8,7 @@ type LibraryItem =
   | { kind: 'sound'; name: string; detail: string }
   | { kind: 'video'; name: string; detail: string; url?: string };
 
-/** Project library for browsing, playing, and exporting parsed FLA assets. */
+/** Browsable project library for MovieClips, symbols, and media assets. */
 export class AssetBrowser {
   private doc: FLADocument | null = null;
   private items: LibraryItem[] = [];
@@ -26,8 +21,8 @@ export class AssetBrowser {
   private search: HTMLInputElement;
   private details: HTMLElement;
   private status: HTMLElement;
-  private currentFrame = 0;
-  private animationTimer: number | null = null;
+  private frame = 0;
+  private timer: number | null = null;
 
   constructor() {
     this.panel = document.createElement('aside');
@@ -38,11 +33,11 @@ export class AssetBrowser {
         <div><strong>Библиотека проекта</strong><small>MovieClip · символы · ассеты</small></div>
         <button type="button" class="asset-library-close" aria-label="Закрыть библиотеку">×</button>
       </header>
-      <label class="asset-library-search-label">Поиск
+      <label class="asset-library-search-label">Поиск по библиотеке
         <input type="search" class="asset-library-search" placeholder="MovieClip, изображение, звук…">
       </label>
       <div class="asset-library-body">
-        <nav class="asset-library-list" aria-label="Ассеты"></nav>
+        <nav class="asset-library-list" aria-label="Ассеты проекта"></nav>
         <section class="asset-library-preview">
           <div class="asset-library-item-title">Загрузите FLA или XFL-файл</div>
           <div class="asset-library-stage-wrap"><canvas class="asset-library-stage"></canvas></div>
@@ -157,7 +152,7 @@ export class AssetBrowser {
   private async select(item: LibraryItem): Promise<void> {
     this.stopPlayback();
     this.selected = item;
-    this.currentFrame = 0;
+    this.frame = 0;
     this.renderList();
     this.renderer = null;
     this.previewDoc = null;
@@ -170,21 +165,18 @@ export class AssetBrowser {
     this.setActionState(item);
 
     if (item.kind === 'symbol' && this.doc) {
+      // Preserve the full symbol map so the selected symbol can resolve nested instances.
       this.previewDoc = { ...this.doc, timelines: [item.symbol.timeline] };
       this.renderer = new FLARenderer(this.canvas);
       await this.renderer.setDocument(this.previewDoc);
       this.renderer.renderFrame(0);
       this.status.textContent = `${item.name}: кадр 1 из ${Math.max(1, item.symbol.timeline.totalFrames)}.`;
-      return;
-    }
-    if (item.kind === 'bitmap' && item.image) {
+    } else if (item.kind === 'bitmap' && item.image) {
       this.canvas.width = Math.max(1, item.image.naturalWidth || item.image.width);
       this.canvas.height = Math.max(1, item.image.naturalHeight || item.image.height);
       this.canvas.getContext('2d')?.drawImage(item.image, 0, 0);
       this.status.textContent = 'Изображение готово к сохранению в PNG.';
-      return;
-    }
-    if (item.kind === 'video' && item.url) {
+    } else if (item.kind === 'video' && item.url) {
       const video = document.createElement('video');
       video.src = item.url;
       video.controls = true;
@@ -193,32 +185,32 @@ export class AssetBrowser {
       video.style.maxHeight = '100%';
       wrap.replaceChildren(video);
       this.status.textContent = 'Предпросмотр встроенного видео.';
-      return;
+    } else {
+      this.status.textContent = item.kind === 'sound'
+        ? 'Звуковой ассет выбран; отдельное воспроизведение из библиотеки пока не поддерживается.'
+        : 'Предпросмотр для этого ассета недоступен.';
     }
-    this.status.textContent = item.kind === 'sound'
-      ? 'Звуковой ассет выбран. Воспроизведение звука через библиотеку пока не поддерживается.'
-      : 'Предпросмотр для этого ассета недоступен.';
   }
 
   private setActionState(item: LibraryItem): void {
-    const hasSymbol = item.kind === 'symbol';
+    const isSymbol = item.kind === 'symbol';
     const hasBitmap = item.kind === 'bitmap' && !!item.image;
-    this.action('play').disabled = !hasSymbol;
-    this.action('png').disabled = !hasBitmap && !hasSymbol;
-    this.action('webm').disabled = !hasSymbol;
-    this.action('mp4').disabled = !hasSymbol;
+    this.action('play').disabled = !isSymbol;
+    this.action('png').disabled = !hasBitmap && !isSymbol;
+    this.action('webm').disabled = !isSymbol;
+    this.action('mp4').disabled = !isSymbol;
   }
 
-  private action(action: string): HTMLButtonElement {
-    return this.panel.querySelector<HTMLButtonElement>(`[data-action="${action}"]`)!;
+  private action(name: string): HTMLButtonElement {
+    return this.panel.querySelector<HTMLButtonElement>(`[data-action="${name}"]`)!;
   }
 
   private async downloadPng(): Promise<void> {
     if (!this.selected) return;
     try {
       if (this.selected.kind === 'symbol' && this.previewDoc) {
-        const blob = await exportSingleFrame(this.previewDoc, this.currentFrame);
-        downloadBlob(blob, `${this.safeName(this.selected.name)}_frame_${String(this.currentFrame + 1).padStart(4, '0')}.png`);
+        const blob = await exportSingleFrame(this.previewDoc, this.frame);
+        downloadBlob(blob, `${this.safeName(this.selected.name)}_frame_${String(this.frame + 1).padStart(4, '0')}.png`);
       } else if (this.selected.kind === 'bitmap' && this.selected.image) {
         const bitmapCanvas = document.createElement('canvas');
         bitmapCanvas.width = this.selected.image.naturalWidth || this.selected.image.width;
@@ -256,10 +248,10 @@ export class AssetBrowser {
     const totalFrames = Math.max(1, this.selected.symbol.timeline.totalFrames);
     this.action('play').textContent = 'Ⅱ Пауза';
     this.animationTimer = window.setInterval(() => {
-      this.currentFrame = (this.currentFrame + 1) % totalFrames;
+      this.frame = (this.frame + 1) % totalFrames;
       this.renderer?.advanceMovieClipPlayheads();
-      this.renderer?.renderFrame(this.currentFrame);
-      this.status.textContent = `${this.selected?.name}: кадр ${this.currentFrame + 1} из ${totalFrames}.`;
+      this.renderer?.renderFrame(this.frame);
+      this.status.textContent = `${this.selected?.name}: кадр ${this.frame + 1} из ${totalFrames}.`;
     }, 1000 / Math.max(1, this.previewDoc.frameRate));
   }
 
@@ -279,17 +271,6 @@ export class AssetBrowser {
 
   private setOpen(open: boolean): void {
     this.panel.classList.toggle('open', open);
-  }
-
-  private installOpenButton(): void {
-    const header = document.querySelector<HTMLElement>('.fla-header');
-    if (!header) return;
-    const button = document.createElement('button');
-    button.className = 'asset-library-open';
-    button.type = 'button';
-    button.textContent = 'Библиотека';
-    button.addEventListener('click', () => this.setOpen(!this.panel.classList.contains('open')));
-    header.appendChild(button);
   }
 
   private installStyles(): void {
