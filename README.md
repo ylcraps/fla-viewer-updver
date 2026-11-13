@@ -1,163 +1,115 @@
 # FLA Viewer
 
-[![Deploy to GitHub Pages](https://github.com/lifeart/fla-viewer/actions/workflows/deploy.yml/badge.svg)](https://github.com/lifeart/fla-viewer/actions/workflows/deploy.yml)
-[![Tests](https://github.com/lifeart/fla-viewer/actions/workflows/test.yml/badge.svg)](https://github.com/lifeart/fla-viewer/actions/workflows/test.yml)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+Браузерный просмотрщик файлов Adobe Animate/Flash FLA и XFL. Разбор, воспроизведение и экспорт выполняются локально в браузере. В мобильной версии доступно меню управления воспроизведением: открыть файл, старт/пауза, стоп, переход по кадрам и перемотка ползунком.
 
-Open Adobe Animate / Flash `.fla` files in the browser. Parsing, playback and export all run locally; the file never leaves your machine.
+## Возможности
 
-**[Live demo](https://lifeart.github.io/fla-viewer/)**: drop a `.fla` file or click **Sample**.
+- Просмотр FLA/XFL, сцен, слоёв, MovieClip и символов.
+- Воспроизведение, пауза, остановка, переход на предыдущий/следующий кадр и перемотка.
+- Экспорт кадров/анимаций в PNG, GIF, SVG, WebM и MP4 (в зависимости от поддержки браузера и устройства).
+- Библиотека проекта для выбора MovieClip и ассетов.
+- Обработка файлов происходит на устройстве; файл не загружается на сервер.
 
-## Why
+## Запуск в браузере
 
-`.fla` is the editable source format of Flash Professional and Adobe Animate. Unlike a compiled `.swf`, it keeps the vector shapes, timelines, symbols, bitmaps and sounds. Without Animate there is no easy way to look at one. This viewer reads the file directly and draws it with Canvas 2D, so old projects can be previewed, inspected and exported to video without Adobe software or Flash Player.
-
-## Supported files
-
-| Format | Versions | Support |
-|--------|----------|---------|
-| XFL (ZIP + XML) | Flash CS5 and later, Animate | Full viewer (see below) |
-| Binary (OLE2 compound file) | Flash 5 to CS4 | Partial: stage size, frame rate, background, library, shapes, symbol instances and keyframes. No tweens, frame labels or sounds. Streams the decoder can't walk cleanly are shown as one frame. |
-
-## Features
-
-**Timeline**
-- Multiple scenes, frame labels, play / pause / scrub / step
-- Motion tweens with CreateJS-compatible easing (named eases, intensity eases, custom bezier eases), rotation (CW/CCW), orient to path
-- Shape tweens, color transform tweens
-- Graphic symbols (loop, play once, single frame) and movie clips with their own playheads
-- Layer parenting (Animate rig), evaluated between child keyframes
-- Hidden layers and folders, guide layers, auto-detected camera layer with optional follow mode
-
-**Drawing**
-- Shapes from quadratic `edges` and cubic `cubics` data, solid / dashed strokes, caps, joints, miter limit
-- Linear and radial gradients (spread modes, focal point), gradient and bitmap strokes
-- Bitmap fills (repeating, clipped, non-smoothed)
-- Masks, including masks built from symbols, tweens and text
-- Filters: blur, glow, drop shadow, bevel, color matrix / adjust color, convolution, gradient glow, gradient bevel
-- Blend modes, color effects (alpha, tint, brightness, advanced)
-- 9-slice scaling, 3D transforms (simplified perspective), cache as bitmap
-- Static and dynamic text with runs, word wrap, alignment, line spacing, kerning, rotation
-
-**Media**
-- Bitmaps: PNG, JPEG, GIF and Adobe `.dat` lossless bitmaps (32-bit and 8-bit palette), with recovery for damaged data
-- Sound: MP3, ADPCM, PCM (8/16/24/32-bit), stream and event sync, in/out points, loops, volume
-- Embedded video: native MP4 / WebM plays (muted) on the timeline; FLV shows a placeholder with its metadata
-
-**Export** (Download button)
-
-| Format | Output |
-|--------|--------|
-| MP4 | H.264, 5 Mbps. Audio is AAC, or Opus where the browser has no AAC encoder (Firefox). Without either, it exports video only and warns. |
-| WebM | VP9, 5 Mbps, Opus audio |
-| Animated GIF | `.gif`, no audio |
-| PNG sequence | `.zip` of numbered frames |
-| Current frame | `.png` or `.svg` |
-| Sprite sheet | `.png` atlas + `.json` |
-
-The Download button only appears when the browser supports WebCodecs (`VideoEncoder` and `AudioEncoder`) and the document has more than one frame.
-
-## Controls
-
-| Input | Action |
-|-------|--------|
-| `Space` | Play / pause |
-| `←` `→` | Previous / next frame |
-| `Home` `End` | First / last frame |
-| `PgUp` `PgDn` | Previous / next scene |
-| `+` `-` `0` | Zoom in / zoom out / reset view |
-| `Shift` + arrows, or drag the canvas | Pan |
-| `D` | Debug panel |
-| `M` | Mute |
-| `F` | Fullscreen |
-
-The upload widget can be dragged aside or closed once a file is open.
-
-### Debug panel
-
-Press `D`. It lists layers with visibility toggles, inspects elements (click on the canvas to pick one), expands nested symbols, changes render order, toggles camera follow, and has edge-decoder options (debug logging, implicit MoveTo after close, splitting on style changes).
-
-### Embedding
-
-Add `?embed=true` to hide the header:
-
-```html
-<iframe src="https://lifeart.github.io/fla-viewer/?embed=true"
-  width="800" height="600" frameborder="0" allowfullscreen></iframe>
-```
-
-## Limitations
-
-- ActionScript is not executed. Buttons don't respond to the mouse (their hit areas show in the debug panel).
-- Embedded video isn't drawn into exports, and seeking it is best-effort. FLV video is not decoded.
-- Fonts are not embedded. Fonts that exist on Google Fonts are fetched from there (a network request); others fall back to system fonts.
-- Some filter options are approximated with Canvas and SVG filters.
-- Parsing runs on the main thread, so large files block the UI while loading.
-
-## Development
-
-Requires Node.js 20 or later.
+Нужен Node.js 20 или новее.
 
 ```bash
-git clone https://github.com/lifeart/fla-viewer.git
-cd fla-viewer
+git clone https://github.com/ylcraps/fla-viewer-updver.git
+cd fla-viewer-updver
 npm install
-npm run dev            # dev server on http://localhost:3000
-npm run build          # type-check and build to dist/
-npm run preview        # serve the build
+npm run dev
 ```
 
-### Tests
+Откройте локальный адрес Vite, обычно `http://localhost:3000`, затем выберите FLA-файл или папку XFL.
 
-Tests use Vitest in browser mode with Playwright Chromium, because the renderer needs a real Canvas.
+## Сборка Android APK из командной строки Windows
+
+Android Studio не обязательна, но нужны Node.js 20+, JDK 17+ и Android SDK Command-line Tools. Установите SDK Platform Tools, Android Platform и Build Tools; примите лицензии через `sdkmanager --licenses`. Укажите путь к SDK в CMD (замените путь на свой):
+
+```bat
+set ANDROID_HOME=C:\Android\Sdk
+set ANDROID_SDK_ROOT=%ANDROID_HOME%
+```
+
+### 1. Установить Capacitor
+
+В корне проекта выполните:
+
+```bat
+npm install @capacitor/core @capacitor/android
+npm install --save-dev @capacitor/cli
+```
+
+Создайте `capacitor.config.ts` в корне проекта:
+
+```ts
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.ylcraps.flaviewer',
+  appName: 'FLA Viewer',
+  webDir: 'dist',
+};
+
+export default config;
+```
+
+### 2. Настроить пути Vite
+
+Чтобы ресурсы приложения открывались в Android WebView, настройте `base` в `vite.config.ts` на `./` для Android-сборки, сохранив `/fla-viewer-updver/` для GitHub Pages. Например:
+
+```ts
+base: process.env.CAPACITOR_BUILD === '1'
+  ? './'
+  : process.env.GITHUB_ACTIONS
+    ? '/fla-viewer-updver/'
+    : '/',
+```
+
+### 3. Создать Android-проект и собрать APK
+
+При первом запуске:
+
+```bat
+npx cap add android
+set CAPACITOR_BUILD=1
+npm run build
+npx cap sync android
+cd android
+gradlew.bat assembleDebug
+```
+
+При следующих сборках начинайте с `set CAPACITOR_BUILD=1`, затем повторите `npm run build`, `npx cap sync android` и `cd android && gradlew.bat assembleDebug`.
+
+Готовый тестовый APK:
+
+```text
+android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+Скопируйте APK на телефон и установите. Для публикации в Google Play потребуется отдельная release-сборка и подпись ключом; debug APK предназначен для тестирования.
+
+## Сборка в Termux
+
+Теоретически сборка возможна на некоторых 64-битных устройствах, но Android SDK/Gradle toolchain в Termux поддерживается хуже, чем на Windows/Linux. Могут возникнуть проблемы с архитектурой, SDK build-tools или памятью. Для надёжной сборки используйте Windows/Linux с JDK и Android SDK. APK можно затем перенести на телефон.
+
+## Ограничения
+
+- Поддержка MP4/WebM и кодеков зависит от браузера/Android WebView и конкретного устройства; проверяйте экспорт на телефоне.
+- ActionScript не исполняется.
+- Некоторые эффекты и старые форматы поддерживаются частично.
+- Первая сборка Android скачивает зависимости и требует интернет; последующие могут использовать локальный Gradle-кэш.
+
+## Тесты
 
 ```bash
-npx playwright install chromium   # once
-npm test                          # run all tests
-npm run test:watch
-npm run test:coverage             # report in coverage/
+npx playwright install chromium
+npm test
 ```
 
-Tests live in `src/__tests__/`, with sample FLAs in `src/__tests__/fixtures/`. Some fixtures are generated by scripts in `scripts/` (`gen-*.mjs`, `make-timeline-fixture.mjs`).
+## Лицензия
 
-CI runs the tests on every pull request (`.github/workflows/test.yml`). Pushes to `master` deploy the build to GitHub Pages (`.github/workflows/deploy.yml`).
+ISC. См. `package.json`.
 
-### Project layout
-
-```
-src/
-├── main.ts                  UI, controls, file loading
-├── fla-parser.ts            XFL parsing (ZIP + XML), bitmaps, sounds, video
-├── edge-decoder.ts          XFL edge / cubic path decoder
-├── shape-utils.ts           Shape repair and path helpers
-├── path-utils.ts            Library path normalization
-├── layer-utils.ts           Layer visibility, mask membership, rig parents
-├── renderer.ts              Canvas 2D renderer
-├── player.ts                Playback, scenes, audio sync, zoom and pan
-├── video-exporter.ts        MP4 / WebM / GIF / PNG / SVG / sprite sheet export
-├── adpcm-decoder.ts         ADPCM audio decoder
-├── flv-parser.ts            FLV metadata parser
-├── ole2-reader.ts           OLE2 compound file reader (binary FLA)
-├── binary-fla-parser.ts     Binary FLA entry point
-├── binary-fla-structure.ts  Binary FLA layer structure
-├── binary-shape-decoder.ts  Binary FLA shape geometry
-├── binary-instance-decoder.ts  Binary FLA symbol instances
-├── binary-timeline-decoder.ts  Binary FLA layers and keyframes
-├── sample-generator.ts      Built-in sample file
-├── types.ts                 Document types
-└── __tests__/               Tests and fixtures
-```
-
-```
-.fla ──► fla-parser (XFL) ─┐
-     └─► binary-fla-parser ┴─► FLADocument ──► Renderer ──► Canvas
-                                    │
-                                    ├──► Player ──► Web Audio
-                                    └──► Exporter ──► MP4 / WebM / GIF / PNG / SVG
-```
-
-[AGENTS.md](AGENTS.md) documents the XFL format details and decoding gotchas (easing, `.dat` bitmaps, sound codecs, masks, layer parenting). [TODO.md](TODO.md) tracks feature coverage against the JPEXS decompiler.
-
-## License
-
-ISC (see `package.json`).
+Основано на [lifeart/fla-viewer](https://github.com/lifeart/fla-viewer); сохраняйте лицензионные уведомления исходного проекта.
