@@ -8,9 +8,16 @@ export default defineConfig({
       ? '/fla-viewer-updver/'
       : '/',
   plugins: [{
-    name: 'mobile-transport-menu',
+    name: 'mobile-and-library-tools',
     transformIndexHtml(html) {
-      return html.replace('</body>', '  <script type="module" src="/src/mobile-transport.ts"></script>\n</body>');
+      const withBootstrap = html.replace(
+        '<script type="module" src="/src/main.ts"></script>',
+        '<script type="module" src="/src/asset-browser-bootstrap.ts"></script>\n  <script type="module" src="/src/main.ts"></script>'
+      );
+      return withBootstrap.replace(
+        '</body>',
+        '  <script type="module" src="/src/mobile-transport.ts"></script>\n</body>'
+      );
     },
   }],
   server: { port: 3000 },

@@ -1,18 +1,19 @@
-# FLA Viewer
+# FLA Viewer (обновлённая версия)
 
-Браузерный просмотрщик файлов Adobe Animate/Flash FLA и XFL. Разбор, воспроизведение и экспорт выполняются локально в браузере. В мобильной версии доступно меню управления воспроизведением: открыть файл, старт/пауза, стоп, переход по кадрам и перемотка ползунком.
+Браузерный просмотрщик проектов Adobe Animate/Flash FLA и XFL. Основной интерфейс и таймлайн основаны на [lifeart/fla-viewer](https://github.com/lifeart/fla-viewer). Файлы разбираются на устройстве пользователя и не отправляются на сервер.
 
 ## Возможности
 
-- Просмотр FLA/XFL, сцен, слоёв, MovieClip и символов.
-- Воспроизведение, пауза, остановка, переход на предыдущий/следующий кадр и перемотка.
-- Экспорт кадров/анимаций в PNG, GIF, SVG, WebM и MP4 (в зависимости от поддержки браузера и устройства).
-- Библиотека проекта для выбора MovieClip и ассетов.
-- Обработка файлов происходит на устройстве; файл не загружается на сервер.
+- Просмотр FLA/XFL, сцен, слоёв и анимаций.
+- Воспроизведение, пауза, остановка, переход по кадрам и перемотка таймлайна.
+- Мобильное меню: открыть файл, play/pause, stop, следующий/предыдущий кадр и ползунок перемотки.
+- Библиотека проекта: выбор MovieClip, графических символов, кнопок, bitmap, звуков и встроенного видео.
+- Предпросмотр выбранного MovieClip и экспорт его кадра в PNG, анимации в WebM/MP4 (если кодеки поддерживаются браузером).
+- Экспорт через основное меню: MP4, WebM, GIF, PNG-последовательность, текущий PNG/SVG-кадр и sprite sheet.
 
-## Запуск в браузере
+## Запуск сайта локально
 
-Нужен Node.js 20 или новее.
+Требуется Node.js 20 или новее:
 
 ```bash
 git clone https://github.com/ylcraps/fla-viewer-updver.git
@@ -21,58 +22,40 @@ npm install
 npm run dev
 ```
 
-Откройте локальный адрес Vite, обычно `http://localhost:3000`, затем выберите FLA-файл или папку XFL.
+Откройте URL Vite (обычно `http://localhost:3000`), загрузите FLA/XFL, затем нажмите **Библиотека** в верхней панели. В основной панели таймлайна можно ставить анимацию на паузу и перематывать её.
 
-## Сборка Android APK из командной строки Windows
+## Сборка Android APK на Windows без Android Studio
 
-Android Studio не обязательна, но нужны Node.js 20+, JDK 17+ и Android SDK Command-line Tools. Установите SDK Platform Tools, Android Platform и Build Tools; примите лицензии через `sdkmanager --licenses`. Укажите путь к SDK в CMD (замените путь на свой):
+Нужны Node.js 20+, JDK 17+ и Android SDK Command-line Tools. Установите SDK-платформу и build-tools, затем примите лицензии через `sdkmanager --licenses`. Укажите путь к SDK в CMD, заменив пример на свой:
 
 ```bat
 set ANDROID_HOME=C:\Android\Sdk
 set ANDROID_SDK_ROOT=%ANDROID_HOME%
 ```
 
-### 1. Установить Capacitor
-
-В корне проекта выполните:
+Далее из корня проекта:
 
 ```bat
 npm install @capacitor/core @capacitor/android
 npm install --save-dev @capacitor/cli
+npx cap add android
 ```
 
-Создайте `capacitor.config.ts` в корне проекта:
+Создайте `capacitor.config.ts` в корне:
 
 ```ts
 import type { CapacitorConfig } from '@capacitor/cli';
-
 const config: CapacitorConfig = {
   appId: 'com.ylcraps.flaviewer',
   appName: 'FLA Viewer',
   webDir: 'dist',
 };
-
 export default config;
 ```
 
-### 2. Настроить пути Vite
-
-Чтобы ресурсы приложения открывались в Android WebView, настройте `base` в `vite.config.ts` на `./` для Android-сборки, сохранив `/fla-viewer-updver/` для GitHub Pages. Например:
-
-```ts
-base: process.env.CAPACITOR_BUILD === '1'
-  ? './'
-  : process.env.GITHUB_ACTIONS
-    ? '/fla-viewer-updver/'
-    : '/',
-```
-
-### 3. Создать Android-проект и собрать APK
-
-При первом запуске:
+В `vite.config.ts` задайте `base: './'` для Android-сборки (смотрите условия `CAPACITOR_BUILD` в конфигурации). Затем соберите APK:
 
 ```bat
-npx cap add android
 set CAPACITOR_BUILD=1
 npm run build
 npx cap sync android
@@ -80,26 +63,20 @@ cd android
 gradlew.bat assembleDebug
 ```
 
-При следующих сборках начинайте с `set CAPACITOR_BUILD=1`, затем повторите `npm run build`, `npx cap sync android` и `cd android && gradlew.bat assembleDebug`.
-
-Готовый тестовый APK:
+Файл появится здесь:
 
 ```text
 android\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-Скопируйте APK на телефон и установите. Для публикации в Google Play потребуется отдельная release-сборка и подпись ключом; debug APK предназначен для тестирования.
-
-## Сборка в Termux
-
-Теоретически сборка возможна на некоторых 64-битных устройствах, но Android SDK/Gradle toolchain в Termux поддерживается хуже, чем на Windows/Linux. Могут возникнуть проблемы с архитектурой, SDK build-tools или памятью. Для надёжной сборки используйте Windows/Linux с JDK и Android SDK. APK можно затем перенести на телефон.
+APK является debug-сборкой для установки и тестирования, не Play Store release. MP4/WebM-экспорт зависит от WebView и кодеков конкретного Android-устройства. Подробный Windows-рецепт: [ANDROID_BUILD_WINDOWS.md](ANDROID_BUILD_WINDOWS.md).
 
 ## Ограничения
 
-- Поддержка MP4/WebM и кодеков зависит от браузера/Android WebView и конкретного устройства; проверяйте экспорт на телефоне.
 - ActionScript не исполняется.
-- Некоторые эффекты и старые форматы поддерживаются частично.
-- Первая сборка Android скачивает зависимости и требует интернет; последующие могут использовать локальный Gradle-кэш.
+- Совместимость с отдельными старыми бинарными FLA и эффектами частичная.
+- MP4/WebM требуют подходящего WebCodecs encoder; наличие зависит от браузера/устройства.
+- Звук виден в библиотеке, но отдельное воспроизведение выбранного звукового ассета из библиотеки пока не реализовано.
 
 ## Тесты
 
@@ -110,6 +87,4 @@ npm test
 
 ## Лицензия
 
-ISC. См. `package.json`.
-
-Основано на [lifeart/fla-viewer](https://github.com/lifeart/fla-viewer); сохраняйте лицензионные уведомления исходного проекта.
+ISC (см. `package.json`). При распространении сохраняйте upstream copyright/licence notices.
